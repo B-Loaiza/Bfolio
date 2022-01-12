@@ -19,13 +19,6 @@ const parameters = {
     materialColor: '#ffeded'
 }
 
-// gui
-//     .addColor(parameters, 'materialColor')
-//     .onChange(() =>
-//     {
-//         particlesMaterial.color.set(parameters.materialColor)
-//     })
-
 /**
  * Base
  */
@@ -208,14 +201,29 @@ const shaderMaterial = new THREE.ShaderMaterial({
 
 
 const shader = new THREE.Mesh(shaderGeometry, shaderMaterial)
-// shader.rotation.y = Math.PI
-// shader.position.set(15, 0, 10)
 shader.position.set(15, 0, 0)
 shader.rotation.x = Math.PI / 2
 scene.add(shader)
 
-//text geometry
+//GUI for shader
+//Debug
+// gui.add(shaderMaterial.uniforms.uHighVexElevate, 'value').min(0).max(1).step(0.001).name('uHighVexElevate')
+// gui.add(shaderMaterial.uniforms.uHighVexFreq.value, 'x').min(0).max(10).step(0.001).name('uHighVexFreqX')
+// gui.add(shaderMaterial.uniforms.uHighVexFreq.value, 'y').min(0).max(10).step(0.001).name('uHighVexFreqY')
+// gui.add(shaderMaterial.uniforms.uHighVexSpeed, 'value').min(0).max(4).step(0.001).name('uHighVexSpeed')
+
+// gui.add(shaderMaterial.uniforms.uLowVexElevate, 'value').min(0).max(1).step(0.001).name('uLowVexElevate')
+// gui.add(shaderMaterial.uniforms.uLowVexFreq, 'value').min(0).max(30).step(0.001).name('uLowVexFreq')
+// gui.add(shaderMaterial.uniforms.uLowVexSpeed, 'value').min(0).max(4).step(0.001).name('uLowVexSpeed')
+// gui.add(shaderMaterial.uniforms.uLowVexIterate, 'value').min(0).max(8).step(1).name('uLowVexIterate')
+
+// gui.addColor(debugObject, 'depthColor').name('depthColor').onChange(() => {shaderMaterial.uniforms.uDepthColor.value.set(debugObject.depthColor)})
+// gui.addColor(debugObject, 'surfaceColor').name('surfaceColor').onChange(() => {shaderMaterial.uniforms.uSurfaceColor.value.set(debugObject.surfaceColor)})
+// gui.add(shaderMaterial.uniforms.uColorOffset, 'value').min(0).max(1).step(0.001).name('uColorOffset')
+// gui.add(shaderMaterial.uniforms.uColorMultiplier, 'value').min(0).max(10).step(0.001).name('uColorMultiplier')
+
 const fontLoader = new FontLoader();
+//text geometry
 fontLoader.load('fonts/helvetiker_regular.typeface.json', (font) => 
 {
 const textgeo = new TextGeometry('Brian Loaiza', {
@@ -287,6 +295,9 @@ const sizes = {
     height: window.innerHeight
 }
 
+const fov = 60;
+const planeAspectRatio = 16 / 9;
+
 window.addEventListener('resize', () =>
 {
     // Update sizes
@@ -295,12 +306,23 @@ window.addEventListener('resize', () =>
 
     // Update camera
     camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
+    camera.updateProjectionMatrix();
+
+    if (camera.aspect > planeAspectRatio) {
+		// window too large
+		const cameraHeight = Math.tan(MathUtils.degToRad(fov / 2));
+		const ratio = camera.aspect / planeAspectRatio;
+		const newCameraHeight = cameraHeight / ratio;
+		camera.fov = MathUtils.radToDeg(Math.atan(newCameraHeight)) * 2;
+	} else {
+		// window too narrow
+		camera.fov = fov;
+	}
 
     // Update renderer
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
 
 
 /**
@@ -312,13 +334,10 @@ scene.add(cameraGroup)
 
 
 // Base camera
-const camera = new THREE.PerspectiveCamera(35, sizes.width / sizes.height, 0.1, 100)
-const currentCamera = camera.position
-// camera.position.z = 6
+const camera = new THREE.PerspectiveCamera(fov, sizes.width / sizes.height, 0.1, 100)
 camera.position.z = 60
 camera.position.x = 0.05
 cameraGroup.add(camera)
-
 
 /**
  * Renderer
